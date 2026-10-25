@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 3,
+  "title": "Tire Tester",
+  "description": "Pick a tire, set the pressure, tip the ramp, rev him up and let go at the right moment. Five tire types, 350 setups, and a course full of trampolines, kickers, trucks, blimps and birds.",
+  "author": "jaychugstein",
+  "version": "1.0.0",
+  "date": "2026-10-25",
+  "genre": "Action",
+  "license": "MIT",
+  "sourceUrl": "https://github.com/jaychugstein/Tire-Tester",
+  "binaries": [
+    {
+      "title": "Tire Tester",
+      "filename": "TireTester.hex",
+      "device": "ArduboyFX",
+      "flashdata": "TireTester-fxdata.bin",
+      "titleimage": "title.png"
+    }
+  ]
+}
