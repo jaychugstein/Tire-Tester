@@ -246,14 +246,15 @@ void drawTire(int16_t cx, int16_t by, int16_t rx, int16_t ry) {
   }
 }
 
-void drawTach() {                                                // big rev counter, shakes harder as the revs climb
+void drawTach() {                                                // big rev counter: shakes as the revs climb, slides away once he's rolling
   int8_t k = st == S_REV ? (rpm > RED ? 2 : rpm > 4.0f ? 1 : 0) : 0;
-  int16_t ox = 79 + random(-k, k + 1), oy = random(-k, k + 1);
+  int16_t ox = 66 + random(-k, k + 1), oy = 1 + random(-k, k + 1);
+  if (st == S_ROLL) oy -= (int16_t)(x - START_X) / 2;
   FX::drawBitmap(ox, oy, FX_TACH, 0, dbmMasked);
-  int16_t cx = ox + 24, cy = oy + 24;
+  int16_t cx = ox + 31, cy = oy + 31;
   float a = (225 - rpm / RPM_MAX * 270) * PI / 180, c = cos(a), sn = sin(a);
-  ab.drawLine(cx, cy, cx + c * 18, cy - sn * 18, BLACK);
-  ab.drawLine(cx + 1, cy, cx + 1 + c * 17, cy - sn * 17, BLACK);
+  ab.drawLine(cx, cy, cx + c * 23, cy - sn * 23, BLACK);
+  ab.drawLine(cx + 1, cy, cx + 1 + c * 22, cy - sn * 22, BLACK);
   ab.fillCircle(cx, cy, 2, BLACK);
 }
 
@@ -323,7 +324,7 @@ void drawRamp(int16_t x0, int16_t gy) {
   int16_t lx = x0 + w, top = gy - rprof[w];
   frect(lx - 1, top - 2, 3, gy - top + 2, BLACK);                // back post
   frect(lx - 4, gy - 1, 8, 2, BLACK);                            // footing
-  if (top < 10 && st == S_RSEL) return;                          // steep ramp on the setup screen: no room for the flag
+  if (top < 22 && st == S_RSEL) return;                          // steep ramp on the setup screen: no room for the flag
   ab.drawFastVLine(lx + 1, top - 10, 8, BLACK);                  // flag pole + waving flag
   uint8_t f = (ab.frameCount >> 3) & 1;
   ab.drawLine(lx + 2, top - 10, lx + 6, top - 9 + f, BLACK); ab.drawLine(lx + 2, top - 7, lx + 6, top - 9 + f, BLACK);
@@ -600,63 +601,61 @@ void boldC(int16_t cx, int16_t y, PGM_P s) {           // bold text centred on c
   int16_t x = cx - strlen_P(s) * 7 / 2;
   for (char c; (c = pgm_read_byte(s++)); x += 7) { at(x, y); pc(c); at(x + 1, y); pc(c); }
 }
-void hint(PGM_P s) { if ((ab.frameCount >> 5) & 1) boldC(64, 54, s); }
+void hint(PGM_P s) { if ((ab.frameCount >> 5) & 1) { tw_ = true; boldC(64, 53, s); tw_ = false; } }   // white, on the road
 void plist(int16_t x, int16_t y, PGM_P a, bool c) {     // lines separated by \0, ending with an empty one; c = centre on x
   for (; pgm_read_byte(a); a += strlen_P(a) + 1, y += 8) { at(c ? x - strlen_P(a) * 3 : x, y); pp(a); }
 }
-void upDown() { int8_t bob = (ab.frameCount >> 4) & 1; at(92, 10 - bob); pc('\x18'); at(92, 28 + bob); pc('\x19'); }   // bobbing arrows on the setup screens
+void upDown() { int8_t bob = (ab.frameCount >> 4) & 1; at(92, 13 - bob); pc('\x18'); at(92, 31 + bob); pc('\x19'); }
+void road(int16_t y) { frect(0, y, 128, 64 - y, BLACK); for (int16_t x = 3; x < 128; x += 13) frect(x, 61, 7, 1, WHITE); }   // black road, white dashes
+void frameUp(PGM_P t) { frect(0, 0, 128, 11, BLACK); tw_ = true; boldC(64, 2, t); tw_ = false; road(57); }   // setup screens: title bar on top, road below
 
 void drawMenus() {
   if (st == S_TITLE) {
     FX::drawBitmap(1, 4, FX_TITLE, 0, dbmMasked);
-    ab.drawFastHLine(0, 50, 128, BLACK);
+    road(51);
     FX::drawBitmap(90, 6 - ((ab.frameCount >> 3) & 1), FX_HERO, (ab.frameCount & 127) < 6, dbmMasked);   // big tire guy, hops and blinks
     hint(PSTR("PRESS TO START"));
   } else if (st == S_SOUND) {
     bool on = ab.audio.enabled();
-    boldC(32, 4, PSTR("SOUND"));                       // centred over the tire guy
-    ab.drawFastHLine(0, 60, 128, BLACK);
     uint8_t ph = (ab.frameCount >> 2) & 3;            // ON: bouncing to the music. OFF: asleep, z z z
-    FX::drawBitmap(12, 16 - (on && (ph & 1) ? 4 : 0), FX_HERO, on ? (ph ? 0 : 2) : 3, dbmMasked);
+    FX::drawBitmap(12, 13 - (on && (ph & 1) ? 4 : 0), FX_HERO, on ? (ph ? 0 : 2) : 3, dbmMasked);
     if (!on) boldC(54, 24 - ((ab.frameCount >> 4) & 3) * 2, PSTR("Z"));
     upDown();
-    boldC(95, 19, on ? PSTR("ON") : PSTR("OFF"));
-    boldC(95, 44, on ? PSTR("VROOM!") : PSTR("SHHH..."));
+    boldC(95, 22, on ? PSTR("ON") : PSTR("OFF"));
+    boldC(95, 43, on ? PSTR("VROOM!") : PSTR("SHHH..."));
+    frameUp(PSTR("SOUND"));
   } else if (st == S_TYPE) {
-    at(1, 1); PS("TIRE TYPE");
-    ab.drawFastHLine(0, 60, 128, BLACK);
-    drawTire(30, 60, 22, 22);
+    drawTire(30, 57, 22, 22);
     upDown();
-    plist(95, 19, (PGM_P)pgm_read_ptr(&TNAME[tt]), 1); plist(94, 39, (PGM_P)pgm_read_ptr(&TDA[tt]), 1);
+    plist(95, 22, (PGM_P)pgm_read_ptr(&TNAME[tt]), 1); plist(94, 40, (PGM_P)pgm_read_ptr(&TDA[tt]), 1);
+    frameUp(PSTR("TIRE TYPE"));
   } else if (st == S_PSI) {
-    at(1, 1); PS("TIRE PRESSURE");
-    at(84, 18); pc('\x18'); PS(" "); pn(psi); PS(" "); pc('\x19');
-    at(92, 27); PS("PSI");
+    at(84, 14); pc('\x18'); PS(" "); pn(psi); PS(" "); pc('\x19');
+    at(92, 23); PS("PSI");
     { uint8_t q = psi < 25 ? 0 : psi > 35 ? 2 : 1;                 // centred under the PSI
       static const char L0[] PROGMEM = "+GRIP\0+SOFT LAND\0-LESS ROLL\0", L1[] PROGMEM = "BALANCED\0", L2[] PROGMEM = "+BOUNCY\0+ROLLS FAR\0-LESS GRIP\0";
       PGM_P a = q == 0 ? L0 : q == 1 ? L1 : L2;
-      plist(95, 37, a, 1); }
-    ab.drawFastHLine(0, 60, 74, BLACK);
-    FX::drawBitmap(11, 14, FX_PSITIRE, tt * 31 + (uint8_t)(shownPsi - 15 + 0.5f), dbmNormal);   // squashed .. round, from FX
+      plist(95, 33, a, 1); }
+    FX::drawBitmap(11, 11, FX_PSITIRE, tt * 31 + (uint8_t)(shownPsi - 15 + 0.5f), dbmNormal);   // squashed .. round, from FX
     if (airT) {                                         // air rushing in or out at the valve
       static const int8_t VX[7] = {49,48,48,47,47,46,46}, VY[7] = {35,33,32,29,28,26,23};   // valve position at each PSI step
       uint8_t q = (psi - 15) / 5; int16_t vx0 = VX[q], vy0 = VY[q], d = (24 - airT) / 3;
-      for (uint8_t i = 0; i < 3; i++) ab.drawFastHLine(vx0 + 2 + (psi > shownPsi ? 6 - d : d) + i * 2, vy0 - 4 + i * 3, 3, BLACK);
+      for (uint8_t i = 0; i < 3; i++) ab.drawFastHLine(vx0 + 2 + (psi > shownPsi ? 6 - d : d) + i * 2, vy0 - 7 + i * 3, 3, BLACK);
     }
+    frameUp(PSTR("TIRE PRESSURE"));
   } else {
-    at(1, 1); PS("RAMP ANGLE");                                  // same lettering as the other setup screens
-    at(1, 10); pn(ang); ab.drawRect(tx_, 10, 3, 3, BLACK);       // degree sign
-    plist(1, 19, ang < 35 ? PSTR("+KEEPS SPEED\0-LESS AIR\0") : ang > 45 ? PSTR("+BIG AIR\0-SLOWER\0") : PSTR("BALANCED\0"), 0);
-    int16_t w = (int16_t)rampW(), x0 = 100 - w, gy = 60;
-    ab.drawFastHLine(0, gy, 128, BLACK);
+    at(1, 14); pn(ang); ab.drawRect(tx_, 14, 3, 3, BLACK);       // degree sign
+    plist(1, 23, ang < 35 ? PSTR("+KEEPS SPEED\0-LESS AIR\0") : ang > 45 ? PSTR("+BIG AIR\0-SLOWER\0") : PSTR("BALANCED\0"), 0);
+    int16_t w = (int16_t)rampW(), x0 = 100 - w, gy = 57;
     drawRamp(x0, gy);
     int16_t lt = gy - rprof[w];
     float c = cos(ang * PI / 180), sn = sin(ang * PI / 180);   // dotted launch direction off the lip
     for (uint8_t k = 2; k < 14; k++) ab.drawPixel(x0 + w + 1 + (int16_t)(k * 3 * c), lt - 2 - (int16_t)(k * 3 * sn), BLACK);
     int8_t bob = (ab.frameCount >> 4) & 1;                    // arrows: the ramp tips up and down
-    int16_t ay = lt < 17 ? 17 : lt;                          // arrows just behind the lip, clear of the flag and the launch line
-    int16_t axx = x0 + w + (lt < 16 ? 4 : -10);              // steep: no flag, so they sit right of the post
+    bool steep = lt < 28;                                    // arrows just behind the lip, clear of the flag and the launch line;
+    int16_t ay = steep ? 29 : lt, axx = x0 + w + (steep ? 4 : -10);   // steep: no flag, so they sit right of the post
     at(axx, ay - 16 - bob); pc('\x18'); at(axx, ay - 7 + bob); pc('\x19');
+    frameUp(PSTR("RAMP ANGLE"));
   }
 }
 
@@ -698,7 +697,7 @@ void loop() {
   drawTire(tx, tby, (int16_t)(rx + 0.5f), (int16_t)(ry + 0.5f));
   camx = cx0; camy = cy0;
   if (st <= S_ROLL) drawTach();
-  if (st == S_SET && ((ab.frameCount >> 5) & 1)) { at(92, 49); PS("HOLD"); }
+  if (st == S_SET && ((ab.frameCount >> 5) & 1)) boldC(32, 12, PSTR("HOLD"));
   if (st >= S_ROLL && st <= S_RUN) {
     float tot = st == S_RUN ? sqrt(vx * vx + vy * vy) : sp;
     frect(0, 0, 30, 7, WHITE);
