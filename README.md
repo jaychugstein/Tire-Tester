@@ -6,11 +6,11 @@ A tire with a face, a rev counter and a ramp. Pick your tire, set the pressure,
 tip the ramp, rev him up and let go at the right moment — then see how far he
 bounces, rolls and flies.
 
-245 Different Combinations to test
 
 By **jaychugstein** · MIT License · Arduboy FX / FX-C (uses the FX flash chip).
 
 **Play it in your browser:** https://jaychugstein.github.io/Tire-Tester/ (works on phones too)
+
 
 ![](images/screenshot1.png) ![](images/screenshot2.png)
 
