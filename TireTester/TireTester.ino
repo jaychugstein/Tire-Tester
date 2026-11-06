@@ -397,8 +397,9 @@ void drawStats() {
   frect(4, 4, 120, 56, WHITE); ab.drawRect(4, 4, 120, 56, BLACK); ab.drawRect(6, 6, 116, 52, BLACK);
   if (newRec) FX::drawBitmap(10, 14, FX_NEWREC, 0, dbmMasked);
   else FX::drawBitmap(11, 14, FX_GAMEOVER, 0, dbmMasked);
-  centred(36, [] { PS("DISTANCE "); printDist(dist); });
-  centred(46, [] { PS("SCORE "); pn(score); });
+  centred(31, [] { PS("DISTANCE "); printDist(dist); });
+  centred(40, [] { PS("SCORE "); pn(score); });
+  centred(48, [] { pc('\x1B'); PS(" BACK   AGAIN "); pc('\x1A'); });   // left: title, right (or A / B): go again
 }
 
 // ---------------------------------------------------------------- logic
@@ -455,46 +456,45 @@ void groundStuff() {        // things on the road the tire touches
   }
 }
 
+// A and B do exactly the same thing everywhere, so it never matters how a device maps them
+#define AB_JUST (ab.justPressed(A_BUTTON) || ab.justPressed(B_BUTTON))
+#define AB_HELD (ab.pressed(A_BUTTON) || ab.pressed(B_BUTTON))
+
 void update() {
   if (hitstop) { hitstop--; return; }
   if (gradeT) gradeT--;
   if (msgT) msgT--;
   switch (st) {
     case S_TITLE:
-      if (ab.justPressed(B_BUTTON) || ab.justPressed(A_BUTTON)) st = S_SOUND;
+      if (AB_JUST) st = S_SOUND;
       break;
     case S_SOUND:                                       // sound on or off (saved), then tire type
       if (ab.justPressed(UP_BUTTON) || ab.justPressed(DOWN_BUTTON)) { ab.audio.toggle(); ab.audio.saveOnOff(); snd.tone(NOTE_G5, 80); }
-      if (ab.justPressed(B_BUTTON)) st = S_TYPE;
-      if (ab.justPressed(A_BUTTON)) st = S_TITLE;
+      if (AB_JUST) st = S_TYPE;
       break;
     case S_TYPE:
       if (ab.justPressed(UP_BUTTON)) { tt = (tt + 4) % 5; snd.tone(NOTE_E5, 30); }
       if (ab.justPressed(DOWN_BUTTON)) { tt = (tt + 1) % 5; snd.tone(NOTE_C5, 30); }
       spin += 0.04f;
-      if (ab.justPressed(B_BUTTON)) { st = S_PSI; shownPsi = psi; }
-      if (ab.justPressed(A_BUTTON)) st = S_SOUND;
+      if (AB_JUST) { st = S_PSI; shownPsi = psi; }
       break;
     case S_PSI:
       if (ab.justPressed(UP_BUTTON) && psi < 45) { psi += 5; airT = 24; snd.tone(NOTE_C5, 30, NOTE_E5, 30); }
       if (ab.justPressed(DOWN_BUTTON) && psi > 15) { psi -= 5; airT = 24; snd.tone(1800, 200); }
       shownPsi += (psi - shownPsi) * 0.15f; if (airT) airT--;
-      if (ab.justPressed(B_BUTTON)) st = S_RSEL;
-      if (ab.justPressed(A_BUTTON)) st = S_TYPE;
+      if (AB_JUST) st = S_RSEL;
       break;
     case S_RSEL:
       if (ab.justPressed(UP_BUTTON) && ang < 60) ang += 5;
       if (ab.justPressed(DOWN_BUTTON) && ang > 15) ang -= 5;
-      if (ab.justPressed(B_BUTTON)) { reset(); lock = true; }
-      if (ab.justPressed(A_BUTTON)) st = S_PSI;
+      if (AB_JUST) { reset(); lock = true; }
       break;
     case S_SET:
-      if (ab.justPressed(A_BUTTON)) { st = S_RSEL; break; }
-      if (!ab.pressed(B_BUTTON)) lock = false;
+      if (!AB_HELD) lock = false;
       else if (!lock) { st = S_REV; feet = false; }
       break;
     case S_REV:
-      if (ab.pressed(B_BUTTON)) {
+      if (AB_HELD) {
         if (rpm < RPM_MAX) {
           rpm += REV_A + REV_C * rpm * rpm * rpm + (random(5) - 2) * 0.006f;
           if (rpm >= RPM_MAX) rpm = RPM_MAX;
@@ -582,8 +582,8 @@ void update() {
       break;
     }
     case S_DONE:
-      if (ab.justPressed(B_BUTTON)) { reset(); lock = true; }
-      if (ab.justPressed(A_BUTTON)) { st = S_TITLE; spd = 0; }   // inner: back to the title
+      if (AB_JUST || ab.justPressed(RIGHT_BUTTON)) { reset(); lock = true; }   // A, B or right: go again
+      if (ab.justPressed(LEFT_BUTTON)) { st = S_TITLE; spd = 0; }               // left: back to the title
       break;
   }
   // keep the course filled ahead

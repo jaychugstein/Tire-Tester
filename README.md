@@ -19,8 +19,10 @@ By **jaychugstein** · MIT License · Arduboy FX / FX-C (uses the FX flash chip)
 | Button | What it does |
 |---|---|
 | Up / Down | Change the setting on each setup screen |
-| Outer button | Next screen · at the start line, hold to rev and let go to launch · after a run, go again |
-| Inner button | Back one screen · after a run, back to the title |
+| A or B | Next screen · at the start line, hold to rev and let go to launch · after a run, go again |
+| Right / Left | After a run: go again / back to the title |
+
+A and B do exactly the same thing everywhere, so it doesn't matter how your device maps them.
 
 ## How a run works
 
@@ -28,7 +30,7 @@ By **jaychugstein** · MIT License · Arduboy FX / FX-C (uses the FX flash chip)
 2. **Tire type** — five tires, each with its own tread and its own strengths.
 3. **Tire pressure** — 15 to 45 PSI; watch the tire squash or round out.
 4. **Ramp angle** — 15° to 60°.
-5. **Start line** — hold the outer button to rev. Let go when the needle is in the
+5. **Start line** — hold A or B to rev. Let go when the needle is in the
    white notch in the red zone for a **PERFECT LAUNCH**. Too early is weak, too late
    still gets most of the speed.
 
