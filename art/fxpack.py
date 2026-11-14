@@ -31,7 +31,7 @@ def psitire():                                      # 5 x 31 frames, white = 1, 
     F = np.load(os.path.join(ART, 'psi_types.npy')).reshape(-1, 46, 51); n, H, W = F.shape   # run psi_types.py first
     return bytes([W >> 8, W & 255, H >> 8, H & 255]) + b''.join(bitmap(f)[4:] for f in F)
 parts = [
-    ('FX_TITLE',    ink(L['title']),    "TIRE TESTER lettering"),
+    ('FX_TITLE',    sprite(L['title']), "TIRE TESTER lettering: chrome decal, 74x36 (run title_text.py)"),
     ('FX_GAMEOVER', ink(L['gameover']), 'GAME OVER'),
     ('FX_NEWREC',   ink(L['newrec']),   'NEW RECORD'),
     ('FX_PSITIRE',  psitire(),             'tire on the pressure screen, 5 types x 31 frames for 15..45 PSI, 51x46'),
@@ -42,6 +42,7 @@ parts = [
     ('FX_TREAD',    sprite(TR['small'].reshape(40, 2, 33, 33)), 'tread band, 5 types x 8 turn frames, 33x33 (r13)'),
     ('FX_TREADB',   sprite(TR['big'].reshape(40, 2, 51, 51)),   'tread band, 5 types x 8 turn frames, 51x51 (r22)'),
     ('FX_HERO',     sprite(np.load(os.path.join(ART, 'hero.npy'))), 'big tire guy for title + sound: smile, blink, squash, asleep; 40x46 (run hero.py)'),
+    ('FX_HEROBIG',  sprite(np.load(os.path.join(ART, 'hero_big.npy'))), 'bigger, more detailed tire guy for the title: smile, blink; 50x46 (run hero_big.py)'),
     ('FX_HUBCAP',   sprite(S['hubcap']), 'hubcap pickup, 9x9'),
     ('FX_TRAMP',    sprite(S['tramp']), 'trampoline 24x9, frame 1 = sagging'),
     ('FX_BOOST',    sprite(S['boost']), 'boost arrows 18x7, 2 frames'),

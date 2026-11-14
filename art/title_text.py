@@ -11,8 +11,19 @@ def render(txt, h, maxw):
         im = im.crop(im.getbbox()); w, hh = im.size; nw = round(w * h / hh)
         if nw <= maxw: break
     return np.array(im.resize((nw, h), Image.LANCZOS)) > 110
-a = render("TIRE", 17, 90); b = render("TESTER", 17, 90)
-W = max(a.shape[1], b.shape[1]); H = a.shape[0] + 3 + b.shape[0]
-title = np.zeros((H, W), bool); title[:a.shape[0], :a.shape[1]] = a; title[a.shape[0] + 3:, :b.shape[1]] = b
+from scipy import ndimage as nd
+def decal(h, gap):                                  # chrome decal: white letters, 2px black outline, solid shadow down-right, black shine line
+    a = render("TIRE", h, 999); b = render("TESTER", h, 999)
+    W = max(a.shape[1], b.shape[1]) + 8; H = a.shape[0] + gap + b.shape[0] + 8
+    m = np.zeros((H, W), bool); m[2:2 + a.shape[0], 2:2 + a.shape[1]] = a; y2 = 2 + a.shape[0] + gap; m[y2:y2 + b.shape[0], 2:2 + b.shape[1]] = b
+    ol = nd.binary_dilation(m, iterations=2)
+    sh = np.zeros_like(ol); sh[2:, 2:] = ol[:-2, :-2]
+    band = np.zeros_like(m)
+    for r in (h * 9 // 16, h * 11 // 16): band[2 + r, :] = True; band[y2 + r, :] = True
+    white = m & ~(band & nd.binary_erosion(m))
+    ink_ = (ol | sh) & ~white
+    ys, xs = np.where(ink_ | white); ink_ = ink_[:ys.max() + 1, :xs.max() + 1]; white = white[:ys.max() + 1, :xs.max() + 1]
+    return np.stack([ink_, white])[None]          # one frame of (ink, solid)
+title = decal(13, 4)
 np.savez(os.path.join(ART, 'lettering.npz'), title=title,
          gameover=render("GAME OVER", 13, 108), newrec=render("NEW RECORD", 12, 108))

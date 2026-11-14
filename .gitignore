@@ -1,0 +1,10 @@
+build/
+__pycache__/
+art/hero.npy
+art/hero_big.npy
+art/lettering.npz
+art/psi_types.npy
+art/sprites.npz
+art/tach.npy
+art/tread.npz
+art/sprites_preview.png

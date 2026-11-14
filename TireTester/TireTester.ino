@@ -601,7 +601,18 @@ void boldC(int16_t cx, int16_t y, PGM_P s) {           // bold text centred on c
   int16_t x = cx - strlen_P(s) * 7 / 2;
   for (char c; (c = pgm_read_byte(s++)); x += 7) { at(x, y); pc(c); at(x + 1, y); pc(c); }
 }
-void hint(PGM_P s) { if ((ab.frameCount >> 5) & 1) { tw_ = true; boldC(64, 53, s); tw_ = false; } }   // white, on the road
+const uint8_t PTS[62] PROGMEM = { 0x1F, 0x05, 0x02, 0x00, 0x1F, 0x05, 0x1A, 0x00, 0x1F, 0x15, 0x11, 0x00, 0x12, 0x15, 0x09, 0x00, 0x12, 0x15, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x1F, 0x01, 0x00, 0x0E, 0x11, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x12, 0x15, 0x09, 0x00, 0x01, 0x1F, 0x01, 0x00, 0x1E, 0x05, 0x1E, 0x00, 0x1F, 0x05, 0x1A, 0x00, 0x01, 0x1F, 0x01 };   // "PRESS       TO START" in small 3x5 letters, one byte a column (bit 0 at the top); the gap is for the button
+const uint8_t BTN[14] PROGMEM = { 0x10, 0x26, 0x4F, 0x4F, 0x4F, 0x26, 0x10,   // an Arduboy button, 7 x 7, one byte a column:
+                                  0x10, 0x2C, 0x5E, 0x5E, 0x5E, 0x2C, 0x10 };  // raised, then pushed down into its ring
+void colsW(int16_t x, int16_t y, const uint8_t* p, uint8_t n) {   // draws n columns of bits in white, top left at x, y
+  for (uint8_t c = 0; c < n; c++) { uint8_t b = pgm_read_byte(p + c); for (uint8_t r = 0; r < 8; r++) if (b >> r & 1) ab.drawPixel(x + c, y + r, WHITE); }
+}
+void pressStart() {                                         // PRESS (button) TO START, small and white on the road; the button gets pushed now and then
+  constexpr int16_t X = (128 - 62) / 2;
+  frect(X - 4, 61, 128 - 2 * (X - 4), 1, BLACK);             // (no road dashes running under the words)
+  colsW(X, 55, PTS, 62);
+  colsW(X + 22, 54, BTN + (((ab.frameCount & 31) >= 24) ? 7 : 0), 7);
+}
 void plist(int16_t x, int16_t y, PGM_P a, bool c) {     // lines separated by \0, ending with an empty one; c = centre on x
   for (; pgm_read_byte(a); a += strlen_P(a) + 1, y += 8) { at(c ? x - strlen_P(a) * 3 : x, y); pp(a); }
 }
@@ -611,10 +622,10 @@ void frameUp(PGM_P t) { frect(0, 0, 128, 11, BLACK); tw_ = true; boldC(64, 2, t)
 
 void drawMenus() {
   if (st == S_TITLE) {
-    FX::drawBitmap(1, 4, FX_TITLE, 0, dbmMasked);
-    road(51);
-    FX::drawBitmap(90, 6 - ((ab.frameCount >> 3) & 1), FX_HERO, (ab.frameCount & 127) < 6, dbmMasked);   // big tire guy, hops and blinks
-    hint(PSTR("PRESS TO START"));
+    FX::drawBitmap(1, 8, FX_TITLE, 0, dbmMasked);           // chrome decal lettering, 74x36, a pixel in from the edge
+    road(52);
+    FX::drawBitmap(76, 5 - ((ab.frameCount >> 3) & 1), FX_HEROBIG, (ab.frameCount & 127) < 6, dbmMasked);   // big tire guy 50x46, centred between the R and the edge; hops and blinks
+    pressStart();
   } else if (st == S_SOUND) {
     bool on = ab.audio.enabled();
     uint8_t ph = (ab.frameCount >> 2) & 3;            // ON: bouncing to the music. OFF: asleep, z z z

@@ -87,7 +87,7 @@ and packed into the FX data:
 ```
 cd art
 python3 title_text.py && python3 sprites.py && python3 tread.py
-python3 psi_types.py && python3 tach.py && python3 hero.py
+python3 psi_types.py && python3 tach.py && python3 hero.py && python3 hero_big.py
 python3 fxpack.py      # writes TireTester/fxdata/fxdata.bin and TireTester/fxdata.h
 ```
 
